@@ -16,8 +16,8 @@ const config = {
     database: 'knowledgebuilding'
   },
   jwt: { /* the config of the jwt */
-    secretKey: 'your_secret',
-    expiresIn: '1h',
+    secretKey: 'TheRidiculousAdventurer',
+    expiresIn: '30d',
     ignoreRoutes: ['/user/signin', '/user/signup']
   }
 }

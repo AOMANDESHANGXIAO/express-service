@@ -4,12 +4,19 @@ const router = express.Router()
 
 const prefix = '/user'
 
-const { signin } = require('../../controller/user')
+const { signin, signup } = require('../../controller/user')
 
 /**
  * @description: 登录
  */
 router.post('/signin', signin)
+
+
+/**
+ * @description: 注册
+ */
+router.post('/signup', signup)
+
 
 module.exports = {
   prefix,
