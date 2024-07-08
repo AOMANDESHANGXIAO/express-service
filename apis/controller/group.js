@@ -5,14 +5,12 @@
  * @Description  : the controller of the group
  */
 
+const { getConnection } = require('../../db/conn')
 /**
  * @param {*} req req.body.group_name, req.body.group_color , req.body.group_description, req.body.student_id, req.body.class_id
  * @description: 创建小队
  *
  */
-
-const { getConnection } = require('../../db/conn')
-
 async function createGroup(req, res, next) {
   const connection = await getConnection()
   try {
@@ -55,8 +53,6 @@ async function createGroup(req, res, next) {
       await connection.execute(sql_update_student_group_id)
       await connection.execute(sql_update_group_code)
 
-
-
       const sql_get_group_id = `SELECT * FROM \`group\` WHERE id = ${insert_group_id}`
       let [results_get_group] = await connection.execute(sql_get_group_id)
 
@@ -71,8 +67,10 @@ async function createGroup(req, res, next) {
 
       await connection.commit()
       return res.responseSuccess(data, '创建成功')
+    } else {
+      await connection.rollback()
+      return res.responseFail(null, '创建失败')
     }
-    
   } catch (err) {
     console.log(err)
     await connection.rollback()
@@ -80,6 +78,57 @@ async function createGroup(req, res, next) {
   }
 }
 
+/**
+ *
+ * @param {*} req req.body.student_id, req.body.group_code
+ * @param {*} res
+ * @param {*} next
+ */
+async function joinGroup(req, res, next) {
+  const connection = await getConnection()
+  try {
+    await connection.beginTransaction()
+
+    const sql_query_group = `SELECT * FROM \`group\` WHERE group_code = '${req.body.group_code}'`
+    let [results_group] = await connection.execute(sql_query_group)
+
+    if (results_group.length === 0) {
+      return res.responseFail(null, '小队不存在')
+    }
+
+    const sql_query_student = `SELECT * FROM student WHERE id = ${req.body.student_id}`
+    let [results_student] = await connection.execute(sql_query_student)
+
+    if (results_student.length === 0) {
+      return res.responseFail(null, '学生不存在')
+    } else if (results_student[0].group_id !== null) {
+      return res.responseFail(null, '该学生已有团队')
+    }
+
+    const sql_update_student = `UPDATE student SET group_id = ${results_group[0].id} WHERE id = ${req.body.student_id}`
+
+    await connection.execute(sql_update_student)
+
+    const data = {
+      group_id: results_group[0].id,
+      group_name: results_group[0].group_name,
+      group_description: results_group[0].group_description,
+      group_color: results_group[0].group_color,
+      group_code: results_group[0].group_code,
+      belong_class_id: results_group[0].belong_class_id,
+    }
+
+    await connection.commit()
+
+    return res.responseSuccess(data, '加入成功')
+
+  } catch {
+    await connection.rollback()
+    return res.responseFail(null, '加入失败')
+  }
+}
+
 module.exports = {
   createGroup,
+  joinGroup,
 }

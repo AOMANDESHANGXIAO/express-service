@@ -11,10 +11,12 @@ const router = express.Router()
 
 const prefix = '/group'
 
-const { createGroup } = require('../../controller/group')
+const { createGroup, joinGroup } = require('../../controller/group')
 
 /* 创建小队 */
 router.post('/create', createGroup)
+
+router.post('/join', joinGroup)
 
 module.exports = {
   prefix,
