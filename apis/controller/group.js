@@ -138,44 +138,92 @@ async function joinGroup(req, res, next) {
  * @param {number} req.query.group_id
  */
 async function queryGroupCollaborationData(req, res, next) {
-  const id = req.query.group_id
+  try {
+    const id = req.query.group_id
 
-  const share_feedback_data = await queryGroupShareFeedbackNumber(id)
+    const share_feedback_data = await queryGroupShareFeedbackNumber(id)
 
-  const discussion_data = await queryDiscussionNumber(id)
+    const discussion_data = await queryDiscussionNumber(id)
 
-  const summary_data = await querySummaryNumber(id)
+    const summary_data = await querySummaryNumber(id)
 
-  const data = {
-    list: [
-      {
-        iconName: 'discussion',
-        text: '参与了讨论',
-        num: discussion_data,
-      },
-      {
-        iconName: 'share',
-        text: '分享过观点',
-        num: share_feedback_data['share'],
-      },
-      {
-        iconName: 'feedback',
-        text: '反馈过观点',
-        num: share_feedback_data['feedback'],
-      },
-      {
-        iconName: 'summary',
-        text: '总结过观点',
-        num: summary_data,
-      },
-    ],
+    const data = {
+      list: [
+        {
+          iconName: 'discussion',
+          text: '参与了讨论',
+          num: discussion_data,
+        },
+        {
+          iconName: 'share',
+          text: '分享过观点',
+          num: share_feedback_data['share'],
+        },
+        {
+          iconName: 'feedback',
+          text: '反馈过观点',
+          num: share_feedback_data['feedback'],
+        },
+        {
+          iconName: 'summary',
+          text: '总结过观点',
+          num: summary_data,
+        },
+      ],
+    }
+
+    res.responseSuccess(data, '查询成功')
+  } catch (err) {
+    console.log(err)
+    res.responseFail(null, '查询失败')
   }
-
-  res.responseSuccess(data, '查询成功')
 }
+
+/**
+ *
+ * @param {number} student_id
+ */
+async function queryStudentGroup(req, res, next) {
+  try {
+    const student_id = req.query.student_id
+    const connection = await getConnection()
+    const sql = `
+SELECT
+	t2.id,
+	t2.group_name,
+	t2.group_description,
+	t2.group_code,
+	t2.group_color,
+	t2.belong_class_id 
+FROM
+	student t1
+	JOIN \`group\` t2 ON t2.id = t1.group_id 
+WHERE
+	t1.id = ${student_id};
+  `
+
+    let [results] = await connection.execute(sql)
+
+    const data = {
+      group_id: results[0].id,
+      group_name: results[0].group_name,
+      group_description: results[0].group_description,
+      group_code: results[0].group_code,
+      group_color: results[0].group_color,
+      belong_class_id: results[0].belong_class_id,
+    }
+
+    res.responseSuccess(data, '查询成功')
+  } catch (err) {
+    console.log(err)
+    res.responseFail(null, '查询失败')
+  }
+}
+
 
 module.exports = {
   createGroup,
   joinGroup,
   queryGroupCollaborationData,
+  queryStudentGroup,
 }

@@ -11,7 +11,12 @@ const router = express.Router()
 
 const prefix = '/group'
 
-const { createGroup, joinGroup, queryGroupCollaborationData } = require('../../controller/group')
+const {
+  createGroup,
+  joinGroup,
+  queryGroupCollaborationData,
+  queryStudentGroup,
+} = require('../../controller/group')
 
 /* 创建小队 */
 router.post('/create', createGroup)
@@ -22,6 +27,8 @@ router.post('/join', joinGroup)
 /* 查询小队协作数据 */
 router.get('/query_collaboration_data', queryGroupCollaborationData)
 
+/* 查询学生团队 */
+router.get('/query', queryStudentGroup)
 
 module.exports = {
   prefix,

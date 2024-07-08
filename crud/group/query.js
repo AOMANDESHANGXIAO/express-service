@@ -14,7 +14,8 @@ const { getConnection } = require('../../db/conn')
 async function queryGroupShareFeedbackNumber(group_id) {
   const connection = await getConnection()
 
-  const sql = `SELECT
+  const sql = `
+SELECT
 	SUM( CASE WHEN edge_table.type = 'idea_to_group' THEN 1 ELSE 0 END ) AS share,
 	SUM( CASE WHEN edge_table.type IN ( 'reject', 'approve' ) THEN 1 ELSE 0 END ) AS feedback 
 FROM
@@ -77,8 +78,10 @@ WHERE
 }
 
 
+
 module.exports = {
   queryGroupShareFeedbackNumber,
   queryDiscussionNumber,
-  querySummaryNumber
+  querySummaryNumber,
+  
 }
