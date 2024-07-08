@@ -243,7 +243,7 @@ async function queryMemberData(req, res, next) {
 
   feedback_propose_list.forEach(item => {
     feedback_list_data.push({
-      value: item.feedbackNum,
+      value: item['feedbackNum'],
       name: item['name'],
     })
     propose_list_data.push({
@@ -268,10 +268,54 @@ async function queryMemberData(req, res, next) {
   res.responseSuccess(data, '查询成功')
 }
 
+/**
+ * 
+ * @param {number} req.query.group_id 
+ * @param {number} req.query.topic_id 
+ * @param {*} res 
+ * @param {*} next 
+ */
+async function queryReviseData(req, res, next) {
+  const connection = await getConnection()
+  const { group_id, topic_id } = req.query
+  const sql = `
+SELECT
+	t1.revise_content,
+	t2.nickname,
+	t1.created_time 
+FROM
+	node_revise_record_table t1
+	JOIN student t2 ON t1.student_id = t2.id
+	JOIN \`group\` t3 ON t3.id = t2.group_id
+	JOIN node_table t4 ON t4.topic_id = ${topic_id} 
+	AND t1.node_id = t4.id 
+WHERE
+	t3.id = ${group_id} 
+ORDER BY
+	t1.created_time DESC 
+	LIMIT 5;
+  `
+
+  let [results] = await connection.execute(sql)
+
+  const data = {
+    list: results.map(r => {
+      return {
+        creator: r.nickname,
+        content: r.revise_content,
+        timestamp: r.created_time,
+      }
+    })
+  }
+
+  res.responseSuccess(data, '查询成功')
+}
+
 module.exports = {
   createGroup,
   joinGroup,
   queryGroupCollaborationData,
   queryStudentGroup,
   queryMemberData,
+  queryReviseData
 }
