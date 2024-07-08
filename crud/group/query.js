@@ -57,8 +57,8 @@ WHERE
 }
 
 /**
- * 
- * @param {number} group_id 
+ *
+ * @param {number} group_id
  */
 async function querySummaryNumber(group_id) {
   const connection = await getConnection()
@@ -77,11 +77,78 @@ WHERE
   return results[0].cnt
 }
 
+/**
+ *
+ * @param {number} group_id
+ */
+async function queryGroupStudentProposeFeedbackData(group_id) {
+  const connection = await getConnection()
+  const sql = `
+SELECT 
+    student.nickname AS name,
+    SUM(CASE WHEN edge_table.type = 'idea_to_group' THEN 1 ELSE 0 END) AS proposeNum,
+    SUM(CASE WHEN edge_table.type IN ('reject', 'approve') THEN 1 ELSE 0 END) AS feedbackNum
+FROM 
+    edge_table
+JOIN 
+    node_table ON node_table.id = edge_table.source
+JOIN 
+    student ON student.id = node_table.student_id
+JOIN 
+    \`Group\` ON \`Group\`.id = student.group_id
+WHERE 
+    \`Group\`.id = ${group_id}
+GROUP BY 
+    student.id;
+  `
 
+  let [results] = await connection.execute(sql)
+
+  let res = results.map(r => {
+    return {
+      name: r.name,
+      proposeNum: Number(r.proposeNum),
+      feedbackNum: Number(r.feedbackNum),
+    }
+  })
+
+  return res
+}
+
+/**
+ * 
+ * @param {number} group_id
+ * @description: 查询小组学生总结数据 
+ */
+async function queryGroupStudentSummaryData(group_id) {
+  const connection = await getConnection()
+  const sql = `
+SELECT
+	t2.nickname AS \`name\`, count( t1.id ) AS summaryNum 
+FROM
+	node_revise_record_table t1
+	JOIN student t2 ON t1.student_id = t2.id
+	JOIN \`group\` t3 ON t3.id = t2.id 
+WHERE
+	t3.id = ${group_id} 
+GROUP BY
+	t2.id;
+  `
+
+  let [results] = await connection.execute(sql)
+
+  return results.map(r => {
+    return {
+      name: r.name,
+      summaryNum: Number(r.summaryNum),
+    }
+  })
+}
 
 module.exports = {
   queryGroupShareFeedbackNumber,
   queryDiscussionNumber,
   querySummaryNumber,
-  
+  queryGroupStudentProposeFeedbackData,
+  queryGroupStudentSummaryData
 }

@@ -10,6 +10,8 @@ const {
   queryGroupShareFeedbackNumber,
   queryDiscussionNumber,
   querySummaryNumber,
+  queryGroupStudentProposeFeedbackData,
+  queryGroupStudentSummaryData,
 } = require('../../crud/group/query')
 
 /**
@@ -181,7 +183,7 @@ async function queryGroupCollaborationData(req, res, next) {
 
 /**
  *
- * @param {number} student_id
+ * @param {number} req.query.student_id
  */
 async function queryStudentGroup(req, res, next) {
   try {
@@ -220,10 +222,56 @@ WHERE
   }
 }
 
+/**
+ *
+ * @param {number} req.query.group_id
+ * @param {*} res
+ * @param {*} next
+ */
+async function queryMemberData(req, res, next) {
+  const group_id = req.query.group_id
+
+  const feedback_propose_list = await queryGroupStudentProposeFeedbackData(
+    group_id
+  )
+
+  const summary_list = await queryGroupStudentSummaryData(group_id)
+
+  let feedback_list_data = []
+  let propose_list_data = []
+  let summary_list_data = []
+
+  feedback_propose_list.forEach(item => {
+    feedback_list_data.push({
+      value: item.feedbackNum,
+      name: item['name'],
+    })
+    propose_list_data.push({
+      value: item['proposeNum'],
+      name: item['name'],
+    })
+  })
+
+  summary_list.forEach(item => {
+    summary_list_data.push({
+      value: item['summaryNum'],
+      name: item['name'],
+    })
+  })
+
+  const data = {
+    feedbackList: feedback_list_data,
+    proposeList: propose_list_data,
+    summaryList: summary_list_data,
+  }
+
+  res.responseSuccess(data, '查询成功')
+}
 
 module.exports = {
   createGroup,
   joinGroup,
   queryGroupCollaborationData,
   queryStudentGroup,
+  queryMemberData,
 }
