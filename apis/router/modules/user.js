@@ -6,15 +6,10 @@ const prefix = '/user'
 
 const { signin, signup } = require('../../controller/user')
 
-/**
- * @description: 登录
- */
+/* 登录 */
 router.post('/signin', signin)
 
-
-/**
- * @description: 注册
- */
+/* 注册 */
 router.post('/signup', signup)
 
 

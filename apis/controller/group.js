@@ -6,6 +6,12 @@
  */
 
 const { getConnection } = require('../../db/conn')
+const {
+  queryGroupShareFeedbackNumber,
+  queryDiscussionNumber,
+  querySummaryNumber,
+} = require('../../crud/group/query')
+
 /**
  * @param {*} req req.body.group_name, req.body.group_color , req.body.group_description, req.body.student_id, req.body.class_id
  * @description: 创建小队
@@ -121,14 +127,55 @@ async function joinGroup(req, res, next) {
     await connection.commit()
 
     return res.responseSuccess(data, '加入成功')
-
   } catch {
     await connection.rollback()
     return res.responseFail(null, '加入失败')
   }
 }
 
+/**
+ *
+ * @param {number} req.query.group_id
+ */
+async function queryGroupCollaborationData(req, res, next) {
+  const id = req.query.group_id
+
+  const share_feedback_data = await queryGroupShareFeedbackNumber(id)
+
+  const discussion_data = await queryDiscussionNumber(id)
+
+  const summary_data = await querySummaryNumber(id)
+
+  const data = {
+    list: [
+      {
+        iconName: 'discussion',
+        text: '参与了讨论',
+        num: discussion_data,
+      },
+      {
+        iconName: 'share',
+        text: '分享过观点',
+        num: share_feedback_data['share'],
+      },
+      {
+        iconName: 'feedback',
+        text: '反馈过观点',
+        num: share_feedback_data['feedback'],
+      },
+      {
+        iconName: 'summary',
+        text: '总结过观点',
+        num: summary_data,
+      },
+    ],
+  }
+
+  res.responseSuccess(data, '查询成功')
+}
+
 module.exports = {
   createGroup,
   joinGroup,
+  queryGroupCollaborationData,
 }
