@@ -13,6 +13,7 @@ const prefix = '/discuss'
 
 const { queryAllDiscussion } = require('../../controller/discussion')
 
+/* 查询讨论数据 */
 router.get('/queryTopic', queryAllDiscussion)
 
 module.exports = {

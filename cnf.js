@@ -18,7 +18,7 @@ const config = {
   jwt: { /* the config of the jwt */
     secretKey: 'TheRidiculousAdventurer',
     expiresIn: '30d',
-    ignoreRoutes: ['/user/signin', '/user/signup']
+    ignoreRoutes: ['/user/signin', '/user/signup', '/classroom/queryClassroomList']
   }
 }
 

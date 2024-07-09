@@ -85,7 +85,10 @@ async function queryGroupNode(topic_id, nodeTypeObj) {
   const sql = `
 SELECT
 	t1.id node_id,
-	t1.content 
+	t1.content,
+  t2.group_name,
+  t2.group_color,
+  t2.id 
 FROM
 	node_table t1
 	JOIN \`group\` t2 ON t2.id = t1.group_id 
