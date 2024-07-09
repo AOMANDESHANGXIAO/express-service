@@ -11,7 +11,11 @@ const router = express.Router()
 
 const prefix = '/flow'
 
-const { queryFlowData, queryContentData } = require('../../controller/flow')
+const {
+  queryFlowData,
+  queryContentData,
+  proposeIdea,
+} = require('../../controller/flow')
 
 /* 查询讨论数据包括edge和node */
 router.get('/query', queryFlowData)
@@ -19,7 +23,8 @@ router.get('/query', queryFlowData)
 /* 查询节点的内容 */
 router.get('/query_content', queryContentData)
 
-
+/* 提出想法 */
+router.post('/propose_idea', proposeIdea)
 
 module.exports = {
   prefix,
