@@ -230,6 +230,8 @@ async function reviseGroupConclusion(req, res, next) {
   try {
     const connection = await getConnection()
 
+    await connection.beginTransaction()
+
     const { topic_id, student_id, group_id, conclusion } = req.body
 
     const update_sql = `
@@ -263,6 +265,46 @@ async function reviseGroupConclusion(req, res, next) {
 
     await connection.execute(insert_revise_sql)
 
+    await connection.commit()
+
+    res.responseSuccess(null, '更新成功')
+  } catch (err) {
+    console.log(err)
+    res.responseFail(null, '更新失败')
+  }
+}
+
+/**
+ *
+ * @param {*} req req.body.node_id content student_id
+ * @param {*} res
+ * @param {*} next
+ */
+async function reviseIdea(req, res, next) {
+  try {
+    const { node_id, content, student_id } = req.body
+    const connection = await getConnection()
+
+    await connection.beginTransaction()
+
+    const update_sql = `
+    UPDATE node_table t1 
+    SET content = '${content}' 
+    WHERE
+      t1.id = ${node_id};
+    `
+
+    await connection.execute(update_sql)
+
+    const insert_revise_sql = `
+    INSERT INTO node_revise_record_table ( node_id, revise_content, created_time, student_id )
+    VALUES
+      (${node_id}, '${content}', now(), ${student_id} )
+      `
+    await connection.execute(insert_revise_sql)
+
+    await connection.commit()
+
     res.responseSuccess(null, '更新成功')
   } catch (err) {
     console.log(err)
@@ -275,5 +317,6 @@ module.exports = {
   queryContentData,
   proposeIdea,
   replyIdea,
+  reviseIdea,
   reviseGroupConclusion,
 }
