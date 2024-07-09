@@ -15,7 +15,8 @@ const {
   queryFlowData,
   queryContentData,
   proposeIdea,
-  replyIdea
+  replyIdea,
+  reviseGroupConclusion
 } = require('../../controller/flow')
 
 /* 查询讨论数据包括edge和node */
@@ -29,6 +30,9 @@ router.post('/propose_idea', proposeIdea)
 
 /* 回复想法 */
 router.post('/reply_idea', replyIdea)
+
+/* 修改讨论内容 */
+router.post('/revise_group_conclusion', reviseGroupConclusion)
 
 module.exports = {
   prefix,

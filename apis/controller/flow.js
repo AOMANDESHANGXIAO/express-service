@@ -14,11 +14,7 @@ const {
   queryEdgeNode,
 } = require('../../crud/flow/query')
 
-const {
-  addNode,
-  addEdge
-} = require('../../crud/flow/insert')
-
+const { addNode, addEdge } = require('../../crud/flow/insert')
 
 const nodeTypeObj = {
   topic: 'topic',
@@ -152,7 +148,13 @@ async function proposeIdea(req, res, next) {
 
     await connection.beginTransaction()
 
-    const insert_node_id = await addNode(connection, topic_id, nodeTypeObj.idea, content, student_id)
+    const insert_node_id = await addNode(
+      connection,
+      topic_id,
+      nodeTypeObj.idea,
+      content,
+      student_id
+    )
 
     const query_group_node_id_sql = `
 SELECT
@@ -169,7 +171,13 @@ WHERE
 
     const group_node_id = group_node[0][0]?.id
 
-    await addEdge(connection, insert_node_id, group_node_id, edgeTypeObj.idea_to_group, topic_id)
+    await addEdge(
+      connection,
+      insert_node_id,
+      group_node_id,
+      edgeTypeObj.idea_to_group,
+      topic_id
+    )
 
     await connection.commit()
 
@@ -181,10 +189,10 @@ WHERE
 }
 
 /**
- * 
+ *
  * @param {*} req req.body.topic_id student_id content reply_to reply_type
- * @param {*} res 
- * @param {*} next 
+ * @param {*} res
+ * @param {*} next
  */
 async function replyIdea(req, res, next) {
   try {
@@ -193,7 +201,13 @@ async function replyIdea(req, res, next) {
 
     await connection.beginTransaction()
 
-    const insert_node_id = await addNode(connection, topic_id, nodeTypeObj.idea, content, student_id)
+    const insert_node_id = await addNode(
+      connection,
+      topic_id,
+      nodeTypeObj.idea,
+      content,
+      student_id
+    )
 
     const new_edge_type = reply_type ? edgeTypeObj.approve : edgeTypeObj.reject
 
@@ -201,15 +215,65 @@ async function replyIdea(req, res, next) {
 
     await connection.commit()
     res.responseSuccess(null, '新增成功')
-  } catch(err) {
+  } catch (err) {
     console.log(err)
     res.responseFail(null, '请求失败')
   }
- 
 }
+
+/**
+ *
+ * @param {*} req req.body.topic_id student_id group_id conclusion
+ * @param {*} next
+ */
+async function reviseGroupConclusion(req, res, next) {
+  try {
+    const connection = await getConnection()
+
+    const { topic_id, student_id, group_id, conclusion } = req.body
+
+    const update_sql = `
+  UPDATE node_table t1 
+  SET content = '${conclusion}' 
+  WHERE
+    t1.group_id = ${group_id} 
+    AND topic_id = ${topic_id};`
+
+    await connection.execute(update_sql)
+
+    const query_sql = `
+  SELECT
+    t1.id 
+  FROM
+    node_table t1 
+  WHERE
+    t1.group_id = ${group_id} 
+    AND topic_id = ${topic_id};
+    `
+
+    const [updated_node] = await connection.execute(query_sql)
+
+    const updated_node_id = updated_node[0]?.id
+
+    const insert_revise_sql = `
+  INSERT INTO node_revise_record_table ( node_id, revise_content, created_time, student_id )
+  VALUES
+    (${updated_node_id}, '${conclusion}', now(), ${student_id} )
+    `
+
+    await connection.execute(insert_revise_sql)
+
+    res.responseSuccess(null, '更新成功')
+  } catch (err) {
+    console.log(err)
+    res.responseFail(null, '更新失败')
+  }
+}
+
 module.exports = {
   queryFlowData,
   queryContentData,
   proposeIdea,
-  replyIdea
+  replyIdea,
+  reviseGroupConclusion,
 }
