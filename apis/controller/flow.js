@@ -14,6 +14,12 @@ const {
   queryEdgeNode,
 } = require('../../crud/flow/query')
 
+const {
+  addNode,
+  addEdge
+} = require('../../crud/flow/insert')
+
+
 const nodeTypeObj = {
   topic: 'topic',
   idea: 'idea',
@@ -146,18 +152,7 @@ async function proposeIdea(req, res, next) {
 
     await connection.beginTransaction()
 
-    const add_node_sql = `
-INSERT INTO
-  node_table
-  (topic_id, type, content, student_id, created_time)
-VALUES
-  (${topic_id}, '${nodeTypeObj.idea}', '${content}', '${student_id}', now());`
-
-    const insert_node_id = await connection
-      .execute(add_node_sql)
-      .then(results => {
-        return results[0].insertId
-      })
+    const insert_node_id = await addNode(connection, topic_id, nodeTypeObj.idea, content, student_id)
 
     const query_group_node_id_sql = `
 SELECT
@@ -172,18 +167,9 @@ WHERE
 
     const group_node = await connection.execute(query_group_node_id_sql)
 
-    // console.log(group_node[0])
-
     const group_node_id = group_node[0][0]?.id
 
-    const add_edge_sql = `
-INSERT INTO
-  edge_table
-  (source, target, type, topic_id)
-VALUES
-  (${insert_node_id}, ${group_node_id}, '${edgeTypeObj.idea_to_group}', ${topic_id});`
-
-    await connection.execute(add_edge_sql)
+    await addEdge(connection, insert_node_id, group_node_id, edgeTypeObj.idea_to_group, topic_id)
 
     await connection.commit()
 
@@ -193,8 +179,37 @@ VALUES
     res.responseFail(null, '请求失败')
   }
 }
+
+/**
+ * 
+ * @param {*} req req.body.topic_id student_id content reply_to reply_type
+ * @param {*} res 
+ * @param {*} next 
+ */
+async function replyIdea(req, res, next) {
+  try {
+    const { topic_id, student_id, content, reply_to, reply_type } = req.body
+    const connection = await getConnection()
+
+    await connection.beginTransaction()
+
+    const insert_node_id = await addNode(connection, topic_id, nodeTypeObj.idea, content, student_id)
+
+    const new_edge_type = reply_type ? edgeTypeObj.approve : edgeTypeObj.reject
+
+    await addEdge(connection, insert_node_id, reply_to, new_edge_type, topic_id)
+
+    await connection.commit()
+    res.responseSuccess(null, '新增成功')
+  } catch(err) {
+    console.log(err)
+    res.responseFail(null, '请求失败')
+  }
+ 
+}
 module.exports = {
   queryFlowData,
   queryContentData,
   proposeIdea,
+  replyIdea
 }
