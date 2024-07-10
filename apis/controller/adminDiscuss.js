@@ -91,9 +91,9 @@ async function createDiscussion(req, res, next) {
   VALUES ('${topic_content}', 'topic', ${class_id}, ${new_discuss_id}, NOW())
   `
 
-   const new_topic_node =  await connection.execute(insert_topic_node_sql)
+    const new_topic_node = await connection.execute(insert_topic_node_sql)
 
-   const new_topic_node_id = new_topic_node[0].insertId
+    const new_topic_node_id = new_topic_node[0].insertId
 
     const query_group_ids_sql = `SELECT
 	id 
@@ -103,6 +103,12 @@ WHERE
 	t1.belong_class_id = ${class_id};`
 
     const [group_ids] = await connection.execute(query_group_ids_sql)
+
+    // 如果没有小组
+    if (group_ids.length === 0) {
+      await connection.rollback()
+      return res.responseFail(null, '创建失败，当前班级没有小组')
+    }
 
     // console.log('group_ids >>>', group_ids)
 
