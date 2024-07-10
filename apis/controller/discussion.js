@@ -44,7 +44,7 @@ async function queryAllDiscussion(req, res, next) {
 
     res.responseSuccess(data, '查询成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '查询失败')
   }
 }

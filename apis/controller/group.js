@@ -80,7 +80,7 @@ async function createGroup(req, res, next) {
       return res.responseFail(null, '创建失败')
     }
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     await connection.rollback()
     return res.responseFail(null, '创建失败')
   }
@@ -176,7 +176,7 @@ async function queryGroupCollaborationData(req, res, next) {
 
     res.responseSuccess(data, '查询成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '查询失败')
   }
 }
@@ -217,7 +217,7 @@ WHERE
 
     res.responseSuccess(data, '查询成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '查询失败')
   }
 }

@@ -22,6 +22,7 @@ const config = {
       '/user/signup',
       '/classroom/queryClassroomList',
       '/admin/sign/signin',
+      '/admin/sign/signup',
     ],
   },
 }

@@ -86,7 +86,7 @@ async function signin(req, res, next) {
 
     return res.responseSuccess(data, 'Login successful')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     return res.responseFail(null, 'Login failed')
   }
 }
@@ -121,7 +121,7 @@ async function signup(req, res, next) {
 
     return res.responseSuccess(null, '注册成功')
   } catch {
-    console.log(err)
+    // console.log(err)
     connection.rollback()
     return res.responseFail(null, '注册失败')
   }

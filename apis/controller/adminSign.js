@@ -53,7 +53,7 @@ async function adminSignIn(req, res, next) {
       '请求成功'
     )
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '请求失败')
   }
 }
@@ -82,7 +82,7 @@ async function adminSignUp(req, res, next) {
 
     res.responseSuccess(null, '注册成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '注册失败')
   }
 }

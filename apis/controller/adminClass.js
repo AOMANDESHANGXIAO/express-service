@@ -34,7 +34,7 @@ async function createClass(req, res, next) {
 
     res.responseSuccess(null, '创建班级成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     await connection.rollback()
     res.responseFail(null, '创建班级失败')
   }
@@ -68,7 +68,7 @@ async function dropClass(req, res, next) {
 
     res.responseSuccess(null, '删除班级成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     await connection.rollback()
     res.responseFail(null, '删除班级失败')
   }
@@ -98,7 +98,7 @@ async function queryClassList(req, res, next) {
 
     res.responseSuccess(data, '查询班级列表成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '查询班级列表失败')
   }
 }

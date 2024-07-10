@@ -83,7 +83,7 @@ async function createDiscussion(req, res, next) {
 
     const new_discuss_id = new_discuss[0].insertId
 
-    // console.log('new_discuss_id >>>', new_discuss_id)
+    // // console.log('new_discuss_id >>>', new_discuss_id)
 
     // 创建节点，讨论节点，小组节点
     const insert_topic_node_sql = `
@@ -110,13 +110,13 @@ WHERE
       return res.responseFail(null, '创建失败，当前班级没有小组')
     }
 
-    // console.log('group_ids >>>', group_ids)
+    // // console.log('group_ids >>>', group_ids)
 
     // 根据小组id创建小组的节点
     // 批量插入节点
     const sql = generateGroupNodeInsertSql(class_id, group_ids, new_discuss_id)
 
-    // console.log('sql >>>', sql)
+    // // console.log('sql >>>', sql)
 
     await connection.execute(sql)
 
@@ -146,7 +146,7 @@ WHERE
 
     res.responseSuccess(null, '创建成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '创建失败')
   }
 }

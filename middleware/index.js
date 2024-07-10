@@ -28,13 +28,13 @@ function useCommonMiddleware(app) {
 async function useCustomMiddleware(app) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(middlewarePath)) {
-      console.error('There is no modules folder\n')
+      // console.error('There is no modules folder\n')
       reject(new Error('There is no modules folder'))
     }
 
     fs.readdir(middlewarePath, async (err, files) => {
       if (err) {
-        console.error(err)
+        // console.error(err)
         reject()
       }
       try {
@@ -44,7 +44,7 @@ async function useCustomMiddleware(app) {
             if (path.basename(filePath) !== 'errorMiddleware.js') {
               const midllewareObj = require(filePath)
               Object.keys(midllewareObj).forEach(key => {
-                console.log(key)
+                // console.log('✨Using middleware >>>', key)
                 app.use(midllewareObj[key])
               })
             }
@@ -52,7 +52,7 @@ async function useCustomMiddleware(app) {
         )
         resolve()
       } catch (err) {
-        console.error('Something went wrong when using midlleware', err)
+        // console.error('Something went wrong when using midlleware', err)
         reject()
       }
     })

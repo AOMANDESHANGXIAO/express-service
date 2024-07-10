@@ -100,7 +100,7 @@ async function queryFlowData(req, res, next) {
 
     res.responseSuccess(data, '请求成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '请求失败')
   }
 }
@@ -129,7 +129,7 @@ WHERE
 
     res.responseSuccess({ content: results[0]?.content }, '请求成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '请求失败')
   }
 }
@@ -183,7 +183,7 @@ WHERE
 
     res.responseSuccess(null, '新增成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '请求失败')
   }
 }
@@ -216,7 +216,7 @@ async function replyIdea(req, res, next) {
     await connection.commit()
     res.responseSuccess(null, '新增成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '请求失败')
   }
 }
@@ -269,7 +269,7 @@ async function reviseGroupConclusion(req, res, next) {
 
     res.responseSuccess(null, '更新成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '更新失败')
   }
 }
@@ -307,7 +307,7 @@ async function reviseIdea(req, res, next) {
 
     res.responseSuccess(null, '更新成功')
   } catch (err) {
-    console.log(err)
+    // console.log(err)
     res.responseFail(null, '更新失败')
   }
 }

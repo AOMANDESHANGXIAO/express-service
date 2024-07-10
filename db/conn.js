@@ -17,13 +17,13 @@ let conn
 async function getConnection() {
   try {
     if (!conn) {
-      console.log('database connecting...')
+      // console.log('database connecting...')
       conn = await mysql.createConnection(config)
-      console.log('database connected!')
+      // console.log('database connected!')
     }
     return conn
   } catch (err) {
-    console.error('Something went wrong when connecting to database', err)
+    // console.error('Something went wrong when connecting to database', err)
   }
 }
 

@@ -17,13 +17,13 @@ const routerPath = __dirname + '/modules'
 async function useRouters(app) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(routerPath)) {
-      console.error('There is no modules folder\n')
+      // console.error('There is no modules folder\n')
       reject(new Error('There is no modules folder'))
     }
 
     fs.readdir(routerPath, async (err, files) => {
       if (err) {
-        console.error(err)
+        // console.error(err)
         reject()
       }
       try {
@@ -31,12 +31,12 @@ async function useRouters(app) {
           files.map(async file => {
             const { prefix, router } = require(path.join(routerPath, file))
             app.use(prefix, router)
-            console.log(prefix)
+            // console.log('✨Using router >>>', prefix)
           })
         )
         resolve()
       } catch (err) {
-        console.error('Something went wrong when using routers', err)
+        // console.error('Something went wrong when using routers', err)
         reject()
       }
     })
