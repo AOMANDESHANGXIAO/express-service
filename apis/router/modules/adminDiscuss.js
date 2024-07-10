@@ -11,8 +11,10 @@ const router = express.Router()
 
 const prefix = '/admin/discuss'
 
+const { createDiscussion } = require('../../controller/adminDiscuss')
+
 /* 创建讨论 */
-router.post('/create', ()=>{})
+router.post('/create', createDiscussion)
 
 module.exports = {
   prefix,
