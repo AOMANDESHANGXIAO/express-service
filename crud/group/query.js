@@ -95,9 +95,9 @@ JOIN
 JOIN 
     student ON student.id = node_table.student_id
 JOIN 
-    \`Group\` ON \`Group\`.id = student.group_id
+    \`group\` ON \`group\`.id = student.group_id
 WHERE 
-    \`Group\`.id = ${group_id}
+    \`group\`.id = ${group_id}
 GROUP BY 
     student.id;
   `

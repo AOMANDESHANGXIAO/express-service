@@ -229,56 +229,61 @@ WHERE
  * @param {*} next
  */
 async function queryMemberData(req, res, next) {
-  const group_id = req.query.group_id
+  try {
+    const group_id = req.query.group_id
 
-  const feedback_propose_list = await queryGroupStudentProposeFeedbackData(
-    group_id
-  )
+    const feedback_propose_list = await queryGroupStudentProposeFeedbackData(
+      group_id
+    )
 
-  const summary_list = await queryGroupStudentSummaryData(group_id)
+    const summary_list = await queryGroupStudentSummaryData(group_id)
 
-  let feedback_list_data = []
-  let propose_list_data = []
-  let summary_list_data = []
+    let feedback_list_data = []
+    let propose_list_data = []
+    let summary_list_data = []
 
-  feedback_propose_list.forEach(item => {
-    feedback_list_data.push({
-      value: item['feedbackNum'],
-      name: item['name'],
+    feedback_propose_list.forEach(item => {
+      feedback_list_data.push({
+        value: item['feedbackNum'],
+        name: item['name'],
+      })
+      propose_list_data.push({
+        value: item['proposeNum'],
+        name: item['name'],
+      })
     })
-    propose_list_data.push({
-      value: item['proposeNum'],
-      name: item['name'],
-    })
-  })
 
-  summary_list.forEach(item => {
-    summary_list_data.push({
-      value: item['summaryNum'],
-      name: item['name'],
+    summary_list.forEach(item => {
+      summary_list_data.push({
+        value: item['summaryNum'],
+        name: item['name'],
+      })
     })
-  })
 
-  const data = {
-    feedbackList: feedback_list_data,
-    proposeList: propose_list_data,
-    summaryList: summary_list_data,
+    const data = {
+      feedbackList: feedback_list_data,
+      proposeList: propose_list_data,
+      summaryList: summary_list_data,
+    }
+
+    res.responseSuccess(data, '查询成功')
+  } catch (err) {
+    res.responseFail(null, '查询失败' + String(err))
   }
-
-  res.responseSuccess(data, '查询成功')
 }
 
 /**
- * 
- * @param {number} req.query.group_id 
- * @param {number} req.query.topic_id 
- * @param {*} res 
- * @param {*} next 
+ *
+ * @param {number} req.query.group_id
+ * @param {number} req.query.topic_id
+ * @param {*} res
+ * @param {*} next
  */
 async function queryReviseData(req, res, next) {
   const connection = await getConnection()
-  const { group_id, topic_id } = req.query
-  const sql = `
+  try {
+    const { group_id, topic_id } = req.query
+    const sql = `
 SELECT
 	t1.revise_content,
 	t2.nickname,
@@ -296,19 +301,22 @@ ORDER BY
 	LIMIT 5;
   `
 
-  let [results] = await connection.execute(sql)
+    let [results] = await connection.execute(sql)
 
-  const data = {
-    list: results.map(r => {
-      return {
-        creator: r.nickname,
-        content: r.revise_content,
-        timestamp: r.created_time,
-      }
-    })
+    const data = {
+      list: results.map(r => {
+        return {
+          creator: r.nickname,
+          content: r.revise_content,
+          timestamp: r.created_time,
+        }
+      }),
+    }
+
+    res.responseSuccess(data, '查询成功')
+  } catch (err) {
+    res.responseFail(null, '查询失败' + String(err))
   }
-
-  res.responseSuccess(data, '查询成功')
 }
 
 module.exports = {
@@ -317,5 +325,5 @@ module.exports = {
   queryGroupCollaborationData,
   queryStudentGroup,
   queryMemberData,
-  queryReviseData
+  queryReviseData,
 }
