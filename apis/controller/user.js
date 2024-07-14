@@ -127,7 +127,24 @@ async function signup(req, res, next) {
   }
 }
 
+/**
+ * 
+ * @param {*} req req.query.id // 学生的id 
+ * @param {*} res 
+ * @param {*} next 
+ * @description: 查询学生协作数据
+ * @returns {discussNum: number,feedbackNum: number,summaryNum: number,proposeNum: number}
+ */
+async function queryUserCollaborationData(req, res, next) {
+  try {
+    const {id} = req.query
+  }catch(err) {
+    return res.responseFail(null, '查询失败')
+  }
+}
+
 module.exports = {
   signin,
   signup,
+  queryUserCollaborationData
 }

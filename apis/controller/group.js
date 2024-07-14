@@ -149,7 +149,10 @@ async function queryGroupCollaborationData(req, res, next) {
     const summary_data = await querySummaryNumber(id)
 
     // 新算法：将讨论数=分享数+总结数+反馈数目
-    const discussion_data = share_feedback_data['share'] + share_feedback_data['feedback'] + summary_data
+    const discussion_data =
+      share_feedback_data['share'] +
+      share_feedback_data['feedback'] +
+      summary_data
 
     const data = {
       list: [
@@ -321,6 +324,48 @@ ORDER BY
   }
 }
 
+/**
+ * @param {number} id // 小组id
+ * @param {*} req req.query.id
+ * @param {*} res
+ * @param {*} next
+ * @description: 查询团队所有的成员
+ * @return {Array[{id: number, name: string}]}
+ */
+async function queryMember(req, res, next) {
+  try {
+    const { id } = req.query
+
+    const connection = await getConnection()
+
+    const sql = `
+    SELECT
+      t1.nickname,
+      t1.id 
+    FROM
+      student t1 
+    WHERE
+      t1.group_id = ${id};`
+
+    const [results] = await connection.execute(sql)
+
+    const list = results.map(r => {
+      return {
+        id: r.id,
+        name: r.nickname,
+      }
+    })
+
+    const data = {
+      list,
+    }
+
+    return res.responseSuccess(data, '查询成功')
+  } catch (err) {
+    return res.responseFail(null, '查询失败' + String(err))
+  }
+}
+
 module.exports = {
   createGroup,
   joinGroup,
@@ -328,4 +373,5 @@ module.exports = {
   queryStudentGroup,
   queryMemberData,
   queryReviseData,
+  queryMember,
 }

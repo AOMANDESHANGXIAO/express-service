@@ -17,7 +17,8 @@ const {
   queryGroupCollaborationData,
   queryStudentGroup,
   queryMemberData,
-  queryReviseData
+  queryReviseData,
+  queryMember
 } = require('../../controller/group')
 
 /* 创建小队 */
@@ -37,6 +38,9 @@ router.get('/query_member_data', queryMemberData)
 
 /* 查询团队的修改数据 */
 router.get('/query_revise_data', queryReviseData)
+
+/* 查询团队所有成员 */
+router.get('/query_member', queryMember)
 
 module.exports = {
   prefix,
