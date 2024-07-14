@@ -9,15 +9,14 @@ const { getConnection } = require('../../db/conn')
 
 /**
  *
- * @param {number} req.query.class_id, req.query.content
+ * @param {number} req.query.class_id, req.query.content, req.query.sort
  * @param {*} res
  * @param {*} next
  */
 async function queryAllDiscussion(req, res, next) {
   try {
     const connection = await getConnection()
-    const class_id = req.query.class_id
-    const content = req.query.content
+    const { class_id, content, sort } = req.query
     let sql = `
   SELECT
     t1.id,
@@ -31,9 +30,14 @@ async function queryAllDiscussion(req, res, next) {
     t1.topic_for_class_id = ${class_id}`
 
     if (content) {
-      sql += ` AND t1.topic_content LIKE '%${content}%';`
+      sql += ` AND t1.topic_content LIKE '%${content}%'`
     }
 
+    if(sort==1) {
+      sql += ` ORDER BY t1.created_time DESC;`
+    } else {
+      sql += ` ORDER BY t1.created_time;`
+    }
 
     let [results] = await connection.execute(sql)
 
