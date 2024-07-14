@@ -128,17 +128,60 @@ async function signup(req, res, next) {
 }
 
 /**
- * 
- * @param {*} req req.query.id // 学生的id 
- * @param {*} res 
- * @param {*} next 
+ *
+ * @param {*} req req.query.id // 学生的id
+ * @param {*} res
+ * @param {*} next
  * @description: 查询学生协作数据
  * @returns {discussNum: number,feedbackNum: number,summaryNum: number,proposeNum: number}
  */
 async function queryUserCollaborationData(req, res, next) {
   try {
-    const {id} = req.query
-  }catch(err) {
+    const { id } = req.query
+
+    // 查询学生提出观点以及反馈的数量sql
+    let sql = `
+    SELECT
+      SUM( CASE WHEN t2.type = 'idea_to_group' THEN 1 ELSE 0 END ) AS proposeNum,
+      sum( CASE WHEN t2.type = 'reject' OR t2.type = 'approve' THEN 1 ELSE 0 END ) AS feedbackNum 
+    FROM
+      node_table t1
+      JOIN edge_table t2 ON t2.source = t1.id 
+    WHERE
+      t1.student_id = ${id};`
+
+    const connection = await getConnection()
+
+    let [results] = await connection.execute(sql)
+
+    const { proposeNum, feedbackNum } = results[0]
+
+    // 查询学生总结观点的数量
+    sql = `
+    SELECT
+      count( * ) AS cnt 
+    FROM
+      node_revise_record_table t1
+      JOIN node_table t2 ON t2.type = 'group' 
+      AND t2.id = t1.node_id 
+    WHERE
+      t1.student_id = ${id};`
+
+    let [results_2] = await connection.execute(sql)
+    // console.log(results_2)
+
+    const { cnt: summaryNum } = results_2[0]
+
+
+    const data = {
+      proposeNum: Number(proposeNum),
+      feedbackNum: Number(feedbackNum),
+      summaryNum: Number(summaryNum),
+      discussNum: Number(proposeNum) + Number(feedbackNum) + Number(summaryNum),
+    }
+
+    return res.responseSuccess(data, '查询成功')
+  } catch (err) {
     return res.responseFail(null, '查询失败')
   }
 }
@@ -146,5 +189,5 @@ async function queryUserCollaborationData(req, res, next) {
 module.exports = {
   signin,
   signup,
-  queryUserCollaborationData
+  queryUserCollaborationData,
 }

@@ -337,24 +337,152 @@ async function queryMember(req, res, next) {
     const { id } = req.query
 
     const connection = await getConnection()
-
+    // 查找分享观点最多、反馈最多的成员
     const sql = `
     SELECT
-      t1.nickname,
-      t1.id 
+      t1.student_id as id,
+      t3.nickname as name,
+      SUM( CASE WHEN t2.type = 'idea_to_group' THEN 1 ELSE 0 END ) AS proposeNum,
+      sum( CASE WHEN t2.type = 'reject' OR t2.type = 'approve' THEN 1 ELSE 0 END ) AS feedbackNum 
+    FROM
+      node_table t1
+      JOIN edge_table t2 ON t2.source = t1.id
+      JOIN student t3 ON t3.id = t1.student_id
+      AND t3.group_id = ${id} 
+    GROUP BY
+      t1.student_id;`
+
+    const [results] = await connection.execute(sql)
+    // 查询总结观点最多的成员
+    const sql_2 = `
+    SELECT
+      t1.student_id as id,
+      count( * ) AS cnt 
+    FROM
+      node_revise_record_table t1
+      JOIN node_table t2 ON t2.type = 'group'
+      JOIN student t3 ON t3.id = t1.student_id 
+      AND t3.group_id = ${id} 
+      AND t2.id = t1.node_id 
+    GROUP BY
+      t1.student_id
+    `
+    const [results_2] = await connection.execute(sql_2)
+
+    // 上两个查询，当学生没有参与讨论时，不会出现在结果中
+    // 因此进行补充
+    const sql_3 = `
+    SELECT
+      t1.id,
+      t1.nickname name 
     FROM
       student t1 
     WHERE
-      t1.group_id = ${id};`
+      t1.group_id = 4`
 
-    const [results] = await connection.execute(sql)
+    const [results_3] = await connection.execute(sql_3)
 
-    const list = results.map(r => {
-      return {
-        id: r.id,
-        name: r.nickname,
+    const student_map = new Map()
+    results_3.forEach(r => {
+      student_map.set(r.id, r)
+    })
+    // console.log(results)
+
+    let bestProposeStudentIds = []
+    let bestFeedbackStudentIds = []
+    let bestSummaryStudentIds = []
+
+    // 至少要发一条才能成为最佳成员
+    let cntP = 1
+    let cntF = 1
+    let cntS = 1
+    results.forEach(r => {
+      if (r.proposeNum > cntP) {
+        bestProposeStudentIds.length = 0
+        cntP = r.proposeNum
+        bestProposeStudentIds.push(r.id)
+      } else if (r.proposeNum === cntP) {
+        bestProposeStudentIds.push(r.id)
+      }
+
+      if (r.feedbackNum > cntF) {
+        bestFeedbackStudentIds.length = 0
+        cntF = r.feedbackNum
+        bestFeedbackStudentIds.push(r.id)
+      } else if (r.feedbackNum === cntF) {
+        bestProposeStudentIds.push(r.id)
       }
     })
+
+    const map = new Map()
+
+    results_2.forEach(r => {
+      if (r.cnt > cntS) {
+        bestSummaryStudentIds.length = 0
+        cntS = r.cnt
+        bestSummaryStudentIds.push(r.id)
+      } else if (r.cnt === cntS) {
+        bestSummaryStudentIds.push(r.id)
+      }
+      // 存储每个学生的总结次数
+      map.set(r.id, r.cnt)
+    })
+
+    const jointed = []
+    const list = results.map(r => {
+      let title = []
+
+      if (bestProposeStudentIds.includes(r.id)) {
+        title.push({
+          text: '最佳分享者',
+          type: 'shareKing',
+        })
+      }
+
+      if (bestFeedbackStudentIds.includes(r.id)) {
+        title.push({
+          text: '最佳反馈者',
+          type: 'feedbackKing',
+        })
+      }
+
+      if (bestSummaryStudentIds.includes(r.id)) {
+        title.push({
+          text: '最佳总结者',
+          type: 'summaryKing',
+        })
+      }
+      jointed.push(r.id)
+      return {
+        id: r.id,
+        name: r.name,
+        title: title,
+        data: {
+          discussNum:
+            Number(r.proposeNum) + Number(r.feedbackNum) + (map.get(r.id) || 0),
+          proposeNum: Number(r.proposeNum),
+          feedbackNum: Number(r.feedbackNum),
+          summaryNum: map.get(r.id) || 0,
+        },
+      }
+    })
+
+    // 查询student_map， 有无被遗漏的学生
+    for (let [key, value] of student_map) {
+      if (!jointed.includes(key)) {
+        list.push({
+          id: key,
+          name: value.name,
+          title: [],
+          data: {
+            discussNum: 0,
+            proposeNum: 0,
+            feedbackNum: 0,
+            summaryNum: 0,
+          },
+        })
+      }
+    }
 
     const data = {
       list,
