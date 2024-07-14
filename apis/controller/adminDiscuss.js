@@ -61,8 +61,8 @@ VALUES
   return baseSql
 }
 /**
- *
- * @param {*} req req.body.topic_content, class_id, created_user_id
+ * @body {topic_content:string, class_id:number, created_user_id:number}
+ * @param {*} req
  * @param {*} res
  * @param {*} next
  */
@@ -75,8 +75,8 @@ async function createDiscussion(req, res, next) {
 
     // 插入讨论
     const insert_discuss_sql = `
-  INSERT INTO discussion (topic_content, topic_for_class_id, created_user_id, created_time) 
-  VALUES ('${topic_content}', ${class_id}, ${created_user_id}, NOW())
+    INSERT INTO discussion (topic_content, topic_for_class_id, created_user_id, created_time) 
+    VALUES ('${topic_content}', ${class_id}, ${created_user_id}, NOW())
   `
 
     const new_discuss = await connection.execute(insert_discuss_sql)
@@ -87,20 +87,21 @@ async function createDiscussion(req, res, next) {
 
     // 创建节点，讨论节点，小组节点
     const insert_topic_node_sql = `
-  INSERT INTO node_table (content, type, class_id, topic_id, created_time)
-  VALUES ('${topic_content}', 'topic', ${class_id}, ${new_discuss_id}, NOW())
+    INSERT INTO node_table (content, type, class_id, topic_id, created_time)
+    VALUES ('${topic_content}', 'topic', ${class_id}, ${new_discuss_id}, NOW())
   `
 
     const new_topic_node = await connection.execute(insert_topic_node_sql)
 
     const new_topic_node_id = new_topic_node[0].insertId
 
-    const query_group_ids_sql = `SELECT
-	id 
-FROM
-	\`group\` t1 
-WHERE
-	t1.belong_class_id = ${class_id};`
+    const query_group_ids_sql = `
+    SELECT
+      id 
+    FROM
+      \`group\` t1 
+    WHERE
+      t1.belong_class_id = ${class_id};`
 
     const [group_ids] = await connection.execute(query_group_ids_sql)
 
@@ -121,13 +122,14 @@ WHERE
     await connection.execute(sql)
 
     // 获取批量插入的ids
-    const query_insert_group_ids_sql = `SELECT
-	id 
-FROM
-	node_table t1 
-WHERE
-	t1.class_id = ${class_id} 
-	AND t1.topic_id = ${new_discuss_id};`
+    const query_insert_group_ids_sql = `
+    SELECT
+      id 
+    FROM
+      node_table t1 
+    WHERE
+      t1.class_id = ${class_id} 
+      AND t1.topic_id = ${new_discuss_id};`
 
     const [insert_group_ids] = await connection.execute(
       query_insert_group_ids_sql

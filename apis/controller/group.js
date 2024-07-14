@@ -8,7 +8,6 @@
 const { getConnection } = require('../../db/conn')
 const {
   queryGroupShareFeedbackNumber,
-  queryDiscussionNumber,
   querySummaryNumber,
   queryGroupStudentProposeFeedbackData,
   queryGroupStudentSummaryData,
@@ -145,9 +144,12 @@ async function queryGroupCollaborationData(req, res, next) {
 
     const share_feedback_data = await queryGroupShareFeedbackNumber(id)
 
-    const discussion_data = await queryDiscussionNumber(id)
+    // const discussion_data = await queryDiscussionNumber(id)
 
     const summary_data = await querySummaryNumber(id)
+
+    // 新算法：将讨论数=分享数+总结数+反馈数目
+    const discussion_data = share_feedback_data['share'] + share_feedback_data['feedback'] + summary_data
 
     const data = {
       list: [

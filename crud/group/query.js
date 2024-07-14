@@ -37,7 +37,7 @@ WHERE
 }
 
 /**
- *
+ * @deprecated
  * @param {number} group_id
  */
 async function queryDiscussionNumber(group_id) {
@@ -123,16 +123,16 @@ GROUP BY
 async function queryGroupStudentSummaryData(group_id) {
   const connection = await getConnection()
   const sql = `
-SELECT
-	t2.nickname AS \`name\`, count( t1.id ) AS summaryNum 
-FROM
-	node_revise_record_table t1
-	JOIN student t2 ON t1.student_id = t2.id
-	JOIN \`group\` t3 ON t3.id = t2.id 
-WHERE
-	t3.id = ${group_id} 
-GROUP BY
-	t2.id;
+  SELECT
+    t2.nickname AS \`name\`, count( t1.id ) AS summaryNum 
+  FROM
+    node_revise_record_table t1
+    JOIN student t2 ON t1.student_id = t2.id
+    JOIN \`group\` t3 ON t3.id = t2.group_id 
+  WHERE
+    t3.id = ${group_id} 
+  GROUP BY
+    t2.id;
   `
 
   let [results] = await connection.execute(sql)
