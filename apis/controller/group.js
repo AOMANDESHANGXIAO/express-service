@@ -410,7 +410,7 @@ async function queryMember(req, res, next) {
         cntF = r.feedbackNum
         bestFeedbackStudentIds.push(r.id)
       } else if (r.feedbackNum === cntF) {
-        bestProposeStudentIds.push(r.id)
+        bestFeedbackStudentIds.push(r.id)
       }
     })
 

@@ -9,7 +9,7 @@ const { getConnection } = require('../../db/conn')
 
 /**
  *
- * @param {number} req.query.class_id
+ * @param {number} req.query.class_id, req.query.content
  * @param {*} res
  * @param {*} next
  */
@@ -17,7 +17,8 @@ async function queryAllDiscussion(req, res, next) {
   try {
     const connection = await getConnection()
     const class_id = req.query.class_id
-    const sql = `
+    const content = req.query.content
+    let sql = `
   SELECT
     t1.id,
     t1.topic_content,
@@ -28,6 +29,11 @@ async function queryAllDiscussion(req, res, next) {
     JOIN admin t2 ON t2.id = t1.created_user_id 
   WHERE
     t1.topic_for_class_id = ${class_id}`
+
+    if (content) {
+      sql += ` AND t1.topic_content LIKE '%${content}%';`
+    }
+
 
     let [results] = await connection.execute(sql)
 
@@ -45,7 +51,7 @@ async function queryAllDiscussion(req, res, next) {
     res.responseSuccess(data, '查询成功')
   } catch (err) {
     // console.log(err)
-    res.responseFail(null, '查询失败')
+    res.responseFail(null, '查询失败' + String(err))
   }
 }
 
