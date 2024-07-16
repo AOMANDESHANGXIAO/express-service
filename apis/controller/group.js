@@ -353,6 +353,7 @@ async function queryMember(req, res, next) {
       t1.student_id;`
 
     const [results] = await connection.execute(sql)
+    console.log(results)
     // 查询总结观点最多的成员
     const sql_2 = `
     SELECT
@@ -368,7 +369,7 @@ async function queryMember(req, res, next) {
       t1.student_id
     `
     const [results_2] = await connection.execute(sql_2)
-
+    console.log(results_2)
     // 上两个查询，当学生没有参与讨论时，不会出现在结果中
     // 因此进行补充
     const sql_3 = `
@@ -397,19 +398,19 @@ async function queryMember(req, res, next) {
     let cntF = 1
     let cntS = 1
     results.forEach(r => {
-      if (r.proposeNum > cntP) {
+      if (Number(r.proposeNum) > cntP) {
         bestProposeStudentIds.length = 0
-        cntP = r.proposeNum
+        cntP = Number(r.proposeNum)
         bestProposeStudentIds.push(r.id)
-      } else if (r.proposeNum === cntP) {
+      } else if (Number(r.proposeNum) === cntP) {
         bestProposeStudentIds.push(r.id)
       }
 
-      if (r.feedbackNum > cntF) {
+      if ( Number(r.feedbackNum)> cntF) {
         bestFeedbackStudentIds.length = 0
-        cntF = r.feedbackNum
+        cntF = Number(r.feedbackNum)
         bestFeedbackStudentIds.push(r.id)
-      } else if (r.feedbackNum === cntF) {
+      } else if (Number(r.feedbackNum) === cntF) {
         bestFeedbackStudentIds.push(r.id)
       }
     })
@@ -417,7 +418,7 @@ async function queryMember(req, res, next) {
     const map = new Map()
 
     results_2.forEach(r => {
-      if (r.cnt > cntS) {
+      if (Number(r.cnt) > cntS) {
         bestSummaryStudentIds.length = 0
         cntS = r.cnt
         bestSummaryStudentIds.push(r.id)

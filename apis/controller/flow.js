@@ -217,7 +217,7 @@ async function replyIdea(req, res, next) {
     res.responseSuccess(null, '新增成功')
   } catch (err) {
     // console.log(err)
-    res.responseFail(null, '请求失败')
+    res.responseFail(null, '请求失败'+String(err))
   }
 }
 
