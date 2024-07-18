@@ -353,7 +353,7 @@ async function queryMember(req, res, next) {
       t1.student_id;`
 
     const [results] = await connection.execute(sql)
-    console.log(results)
+    // console.log(results)
     // 查询总结观点最多的成员
     const sql_2 = `
     SELECT
@@ -369,7 +369,7 @@ async function queryMember(req, res, next) {
       t1.student_id
     `
     const [results_2] = await connection.execute(sql_2)
-    console.log(results_2)
+    // console.log(results_2)
     // 上两个查询，当学生没有参与讨论时，不会出现在结果中
     // 因此进行补充
     const sql_3 = `
