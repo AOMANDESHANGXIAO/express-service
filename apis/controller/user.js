@@ -136,15 +136,17 @@ async function signup(req, res, next) {
  * @returns {discussNum: number,feedbackNum: number,summaryNum: number,proposeNum: number}
  */
 async function queryUserCollaborationData(req, res, next) {
-  let { id, group_id } = req.query
-  id = Number(id)
+  try {
+    let { id, group_id } = req.query
+    id = Number(id)
 
-  let LegendData = []
-  let SeriesData = []
+    let LegendData = []
+    let SeriesData = []
+    let LinksData = []
 
-  const connection = await getConnection()
-  // 查找成员分享观点、不同意观点、同意观点的数量
-  const sql = `
+    const connection = await getConnection()
+    // 查找成员分享观点、不同意观点、同意观点的数量
+    const sql = `
     SELECT
       t1.student_id AS id,
       t3.nickname AS NAME,
@@ -159,9 +161,9 @@ async function queryUserCollaborationData(req, res, next) {
     GROUP BY
       t1.student_id;`
 
-  const [results] = await connection.execute(sql)
-  // 查询成员的总结观点以及修改的自身观点
-  const sql_2 = `
+    const [results] = await connection.execute(sql)
+    // 查询成员的总结观点以及修改的自身观点
+    const sql_2 = `
     SELECT
       t1.student_id AS id,
       t3.nickname as stuName,
@@ -177,10 +179,10 @@ async function queryUserCollaborationData(req, res, next) {
     GROUP BY
       t1.student_id
     `
-  const [results_2] = await connection.execute(sql_2)
-  // 上两个查询，当学生没有参与讨论时，不会出现在结果中
-  // 因此进行补充
-  const sql_3 = `
+    const [results_2] = await connection.execute(sql_2)
+    // 上两个查询，当学生没有参与讨论时，不会出现在结果中
+    // 因此进行补充
+    const sql_3 = `
     SELECT
       t1.id,
       t1.nickname stuName 
@@ -189,173 +191,253 @@ async function queryUserCollaborationData(req, res, next) {
     WHERE
       t1.group_id = 4`
 
-  const [results_3] = await connection.execute(sql_3)
+    const [results_3] = await connection.execute(sql_3)
 
-  results_3.forEach(r => {
-    LegendData.push(r.stuName)
-  })
-
-  const student_map = new Map()
-  /**
-   * 记录小组成员的姓名和id
-   */
-  results_3.forEach(r => {
-    student_map.set(r.stuName, r)
-  })
-
-  let maxP = 0 // 分享
-  let maxR = 0 // 不同意
-  let maxA = 0 // 同意
-  let maxS = 0 // 总结
-  let maxRe = 0 // 修改
-
-  /**
-   * 学生个人的信息
-   */
-  let proposeNum = 0
-  let feedbackNum = 0
-  let summaryNum = 0
-  /**
-   * 查找成员分享观点最多、同意观点最多以及不同意观点最多的成员
-   */
-  const stuDiscussMap = new Map()
-  results.forEach(r => {
-    if (Number(r.proposeNum) > maxP) {
-      maxP = Number(r.proposeNum)
-    }
-
-    if (Number(r.approveNum) > maxA) {
-      maxA = Number(r.approveNum)
-    }
-
-    if (Number(r.rejectNum) > maxR) {
-      maxR = Number(r.rejectNum)
-    }
-
-    stuDiscussMap.set(r.id, r)
-  })
-
-  const summaryMap = new Map()
-
-  results_2.forEach(r => {
-    if (Number(r.summaryNum) > maxS) {
-      maxS = Number(r.summaryNum)
-    }
-    if (Number(r.reviseNum) > maxRe) {
-      maxRe = Number(r.reviseNum)
-    }
-
-    // 存储每个学生的总结次数
-    summaryMap.set(r.id, {
-      summaryNum: Number(r.summaryNum),
-      reviseNum: Number(r.reviseNum),
+    results_3.forEach(r => {
+      LegendData.push(r.stuName)
     })
-  })
-  /**
-   * 求学生本人的各方面数据
-   */
-  // console.log(stuDiscussMap.get(id))
-  proposeNum = Number(stuDiscussMap.get(id).proposeNum)
-  feedbackNum =
-    Number(stuDiscussMap.get(id).approveNum) +
-    Number(stuDiscussMap.get(id).rejectNum)
-  // console.log(summaryMap)
-  summaryNum = Number(summaryMap.get(id).summaryNum)
 
-  const Indicator = [
-    {
-      name: '发布',
-      max: maxP,
-    },
-    {
-      name: '支持',
-      max: maxA,
-    },
-    {
-      name: '反对',
-      max: maxR,
-    },
-    {
-      name: '总结',
-      max: maxS,
-    },
-    {
-      name: '修改',
-      max: maxRe,
-    },
-  ]
-  // 找出每个学生发布、支持、反对、总结、修改的情况
-  const valueSequence = [
-    'proposeNum',
-    'approveNum',
-    'rejectNum',
-    'summaryNum',
-    'reviseNum',
-  ]
+    const student_map = new Map()
+    /**
+     * 记录小组成员的姓名和id
+     */
+    results_3.forEach(r => {
+      student_map.set(r.stuName, r)
+    })
 
-  console.log('LegendData ===>', LegendData)
+    let maxP = 0 // 分享
+    let maxR = 0 // 不同意
+    let maxA = 0 // 同意
+    let maxS = 0 // 总结
+    let maxRe = 0 // 修改
 
-  LegendData.map(legend => {
-    console.log(legend)
-    let value = [0, 0, 0, 0, 0]
-    const stuId = Number(student_map.get(legend).id) // 通过名字找到id
-    console.log(summaryMap)
-    console.log(stuId, stuDiscussMap.get(stuId), summaryMap.get(stuId))
+    /**
+     * 学生个人的信息
+     */
+    let proposeNum = 0
+    let feedbackNum = 0
+    let summaryNum = 0
+    /**
+     * 查找成员分享观点最多、同意观点最多以及不同意观点最多的成员
+     */
+    const stuDiscussMap = new Map()
+    results.forEach(r => {
+      if (Number(r.proposeNum) > maxP) {
+        maxP = Number(r.proposeNum)
+      }
 
-    stuDiscussMap.get(stuId) &&
-      Object.keys(stuDiscussMap.get(stuId)).map(key => {
-        if (valueSequence.includes(key)) {
-          value[valueSequence.indexOf(key)] = Number(
-            stuDiscussMap.get(stuId)[key]
+      if (Number(r.approveNum) > maxA) {
+        maxA = Number(r.approveNum)
+      }
+
+      if (Number(r.rejectNum) > maxR) {
+        maxR = Number(r.rejectNum)
+      }
+
+      stuDiscussMap.set(r.id, r)
+    })
+
+    const summaryMap = new Map()
+
+    results_2.forEach(r => {
+      if (Number(r.summaryNum) > maxS) {
+        maxS = Number(r.summaryNum)
+      }
+      if (Number(r.reviseNum) > maxRe) {
+        maxRe = Number(r.reviseNum)
+      }
+
+      // 存储每个学生的总结次数
+      summaryMap.set(r.id, {
+        summaryNum: Number(r.summaryNum),
+        reviseNum: Number(r.reviseNum),
+      })
+    })
+    /**
+     * 求学生本人的各方面数据
+     */
+    // console.log(stuDiscussMap.get(id))
+    proposeNum = Number(stuDiscussMap.get(id).proposeNum)
+    feedbackNum =
+      Number(stuDiscussMap.get(id).approveNum) +
+      Number(stuDiscussMap.get(id).rejectNum)
+    // console.log(summaryMap)
+    summaryNum = Number(summaryMap.get(id).summaryNum)
+
+    const Indicator = [
+      {
+        name: '发布',
+        max: maxP,
+      },
+      {
+        name: '支持',
+        max: maxA,
+      },
+      {
+        name: '反对',
+        max: maxR,
+      },
+      {
+        name: '总结',
+        max: maxS,
+      },
+      {
+        name: '修改',
+        max: maxRe,
+      },
+    ]
+    // 找出每个学生发布、支持、反对、总结、修改的情况
+    const valueSequence = [
+      'proposeNum',
+      'approveNum',
+      'rejectNum',
+      'summaryNum',
+      'reviseNum',
+    ]
+
+    // console.log('LegendData ===>', LegendData)
+
+    LegendData.map(legend => {
+      // console.log(legend)
+      let value = [0, 0, 0, 0, 0]
+      const stuId = Number(student_map.get(legend).id) // 通过名字找到id
+      // console.log(summaryMap)
+      // console.log(stuId, stuDiscussMap.get(stuId), summaryMap.get(stuId))
+
+      stuDiscussMap.get(stuId) &&
+        Object.keys(stuDiscussMap.get(stuId)).map(key => {
+          if (valueSequence.includes(key)) {
+            value[valueSequence.indexOf(key)] = Number(
+              stuDiscussMap.get(stuId)[key]
+            )
+          }
+        })
+
+      summaryMap.get(stuId) &&
+        Object.keys(summaryMap.get(stuId)).map(key => {
+          if (valueSequence.includes(key)) {
+            value[valueSequence.indexOf(key)] = Number(
+              summaryMap.get(stuId)[key]
+            )
+          }
+        })
+
+      SeriesData.push({
+        name: legend,
+        value,
+      })
+    })
+    /**
+     * 查询小组成员的互动次数
+     */
+    let sql_4 = `
+  SELECT 
+      t1.source, 
+      t1.target, 
+      t3.nickname AS 'activer',
+      t5.nickname AS 'inActiver'
+  FROM 
+      edge_table t1
+  JOIN 
+      node_table t2 ON t1.source = t2.id
+  JOIN 
+      student t3 ON t3.id = t2.student_id
+  JOIN 
+      node_table t4 ON t1.target = t4.id
+  JOIN 
+      student t5 ON t5.id = t4.student_id
+  WHERE
+      t3.group_id = ${group_id} and t1.type != 'group_to_discuss';`
+
+    let [results_4] = await connection.execute(sql_4)
+
+    /**
+     * 组内互动的LinksData生成
+     */
+    for (let i = 0; i < LegendData.length; i++) {
+      for (let j = i + 1; j < LegendData.length; j++) {
+        if (i === j) continue
+        if (
+          LinksData.find(
+            link =>
+              link.source === LegendData[i] && link.target === LegendData[j]
           )
+        ) {
+          continue
         }
-      })
 
-    summaryMap.get(stuId) &&
-      Object.keys(summaryMap.get(stuId)).map(key => {
-        if (valueSequence.includes(key)) {
-          value[valueSequence.indexOf(key)] = Number(summaryMap.get(stuId)[key])
+        if (
+          LinksData.find(
+            link =>
+              link.source === LegendData[j] && link.target === LegendData[i]
+          )
+        ) {
+          continue
         }
-      })
 
-    SeriesData.push({
-      name: legend,
-      value,
-    })
-  })
+        LinksData.push({
+          source: LegendData[i],
+          target: LegendData[j],
+          lineStyle: {
+            width: 0,
+          },
+        })
+      }
+    }
 
-  const data = {
-    selfAnalysisList: [
-      {
-        iconName: 'discussion',
-        text: '参与了讨论',
-        num: Number(proposeNum) + Number(feedbackNum) + Number(summaryNum),
-      },
-      {
-        iconName: 'share',
-        text: '分享了观点',
-        num: Number(proposeNum),
-      },
-      {
-        iconName: 'feedback',
-        text: '反馈了观点',
-        num: Number(feedbackNum),
-      },
-      {
-        iconName: 'summary',
-        text: '总结了讨论',
-        num: Number(summaryNum),
-      },
-    ],
-    Indicator,
-    LegendData,
-    SeriesData
+    // 根据result_4统计小组成员的互动次数
+    for (let i = 0; i < results_4.length; i++) {
+      for (let j = 0; j < LinksData.length; j++) {
+        if (
+          (LinksData[j].source === results_4[i].activer &&
+            LinksData[j].target === results_4[i].inActiver) ||
+          (LinksData[j].target === results_4[i].activer &&
+            LinksData[j].source === results_4[i].inActiver)
+        ) {
+          LinksData[j].lineStyle.width += 1
+          break
+        }
+      }
+    }
+
+    const data = {
+      selfAnalysisList: [
+        {
+          iconName: 'discussion',
+          text: '参与了讨论',
+          num: Number(proposeNum) + Number(feedbackNum) + Number(summaryNum),
+        },
+        {
+          iconName: 'share',
+          text: '分享了观点',
+          num: Number(proposeNum),
+        },
+        {
+          iconName: 'feedback',
+          text: '反馈了观点',
+          num: Number(feedbackNum),
+        },
+        {
+          iconName: 'summary',
+          text: '总结了讨论',
+          num: Number(summaryNum),
+        },
+      ],
+      Indicator,
+      LegendData,
+      SeriesData,
+      LinksData,
+      RelationShipSeriesData: LegendData.map(legend => {
+        return {
+          name: legend,
+        }
+      }),
+    }
+
+    return res.responseSuccess(data, '查询成功')
+  } catch (err) {
+    return res.responseFail(null, '查询失败' + err.toString())
   }
-
-  return res.responseSuccess(data, '查询成功')
-  // } catch (err) {
-  //   return res.responseFail(null, '查询失败' + err.toString())
-  // }
 }
 
 module.exports = {
