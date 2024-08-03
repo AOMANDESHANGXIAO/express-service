@@ -14,7 +14,7 @@ const {
   queryEdgeNode,
 } = require('../../crud/flow/query')
 
-const { addNode, addEdge } = require('../../crud/flow/insert')
+const { addNode, addEdge, createNode } = require('../../crud/flow/insert')
 
 const nodeTypeObj = {
   topic: 'topic',
@@ -89,7 +89,7 @@ async function queryFlowData(req, res, next) {
         source: String(edge.source),
         target: String(edge.target),
         _type: edge.type,
-        animated: true,
+        animated: false,
       }
     })
 
@@ -110,6 +110,7 @@ async function queryFlowData(req, res, next) {
  * @param {number} req.query.node_id
  * @param {*} res
  * @param {*} next
+ * @deprecated
  */
 async function queryContentData(req, res, next) {
   const nide_id = req.query.node_id
@@ -136,36 +137,109 @@ WHERE
 
 /**
  *
- * @param {*} req req.body.topic_id req.body.student_id req.body.content
+ * @param {*} nodes
+ * @param {number} arguKey
+ * @param {number} version
+ * @returns string
+ */
+const generateArgunodeInsertSql = (nodes, arguKey, version) => {
+  let sql = `INSERT INTO argunode (type, content, arguKey, version, arguId) VALUES`
+
+  nodes.forEach((node, index) => {
+    sql += `('${node.data._type}', '${node.data.inputValue}', ${arguKey}, ${version}, '${node.id}')`
+    if (index < nodes.length - 1) {
+      sql += ','
+    }
+  })
+
+  sql += ';'
+
+  return sql
+}
+
+/**
+ *
+ * @param {*} edges
+ * @param {number} arguKey
+ * @param {number} version
+ * @returns string
+ */
+const generateArguedgeInsertSql = (edges, arguKey, version) => {
+  let sql = `INSERT INTO arguedge (type, source, target, arguKey, version, arguId) VALUES`
+
+  edges.forEach((edge, index) => {
+    sql += `('${edge._type}', '${edge.source}', '${edge.target}', '${arguKey}', ${version}, '${edge.id}')`
+    if (index < edges.length - 1) {
+      sql += ','
+    }
+  })
+
+  sql += ';'
+
+  return sql
+}
+
+/**
+ *
+ * @param {*} req req.body.topic_id req.body.student_id rea,body.argument
+ * argument: {
+ *    nodes: Array<{
+ * id: string
+ * data: {
+ *  inputValue: string
+ * _type: string
+ * }
+ * type: "element"}>
+ * ,
+ *    edges: Array<{
+ * id: string
+ * source: string
+ * target: string
+ * _type: string
+ * }
+ * }
  * @param {*} res
  * @param {*} next
  */
 async function proposeIdea(req, res, next) {
   try {
-    const { topic_id, student_id, content } = req.body
+    const { topic_id, student_id, nodes, edges } = req.body
 
     const connection = await getConnection()
 
     await connection.beginTransaction()
 
-    const insert_node_id = await addNode(
+    // 1. 插入idea节点到node_table表中
+    // createNode会插入一个新节点到node_table表中，并返回插入的id
+    const arguKey = await createNode(
       connection,
       topic_id,
       nodeTypeObj.idea,
-      content,
       student_id
     )
 
+    // 2. 遍历根据前端传递的nodes和edges，插入到argunode和arguedge表中
+    const insert_node_sql = generateArgunodeInsertSql(nodes, arguKey, 1)
+
+    const insert_edge_sql = generateArguedgeInsertSql(edges, arguKey, 1)
+
+    await connection.execute(insert_node_sql)
+    console.log('1')
+
+    await connection.execute(insert_edge_sql)
+    console.log('2')
+
+    // 3. 将idea和group连接起来
     const query_group_node_id_sql = `
-SELECT
-	t1.id
-FROM
-	node_table t1
-	JOIN \`group\` t2 ON t1.group_id = t2.id
-	JOIN student t3 ON t3.group_id = t2.id 
-WHERE
-	t3.id = ${student_id} and t1.type = 'group' and t1.topic_id = ${topic_id};
-    `
+    SELECT
+    	t1.id
+    FROM
+    	node_table t1
+    	JOIN \`group\` t2 ON t1.group_id = t2.id
+    	JOIN student t3 ON t3.group_id = t2.id
+    WHERE
+    	t3.id = ${student_id} and t1.type = 'group' and t1.topic_id = ${topic_id};
+        `
 
     const group_node = await connection.execute(query_group_node_id_sql)
 
@@ -173,18 +247,20 @@ WHERE
 
     await addEdge(
       connection,
-      insert_node_id,
+      arguKey,
       group_node_id,
       edgeTypeObj.idea_to_group,
       topic_id
     )
 
+    console.log('3')
+
     await connection.commit()
 
     res.responseSuccess(null, '新增成功')
   } catch (err) {
-    // console.log(err)
-    res.responseFail(null, '请求失败')
+    console.log(err)
+    res.responseFail(null, '请求失败'+String(err))
   }
 }
 
@@ -217,7 +293,7 @@ async function replyIdea(req, res, next) {
     res.responseSuccess(null, '新增成功')
   } catch (err) {
     // console.log(err)
-    res.responseFail(null, '请求失败'+String(err))
+    res.responseFail(null, '请求失败' + String(err))
   }
 }
 

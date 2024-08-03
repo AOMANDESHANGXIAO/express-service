@@ -8,6 +8,28 @@
 // const { getConnection } = require('../../db/conn')
 
 /**
+ * 
+ * @param {*} connection 
+ * @param {*} topic_id 
+ * @param {*} type 
+ * @param {*} student_id 
+ * @returns 
+ * @description 创建节点,node_table表插入数据
+ */
+async function createNode(connection, topic_id, type, student_id) {
+  const sql = `
+INSERT INTO
+  node_table
+  (topic_id, type, student_id, created_time, version)
+VALUES
+  (${topic_id}, '${type}', '${student_id}', now(), 1);`
+
+  const node = await connection.execute(sql)
+
+  return node[0].insertId
+}
+
+/**
  * @param {object} connection the mysql conncetion
  * @param {number} topic_id
  * @param {string} type
@@ -15,13 +37,13 @@
  * @param {number} student_id
  * @returns {number} the insert node id
  */
-async function addNode(connection, topic_id, type, content, student_id) {
+async function addNode(connection, topic_id, type, student_id) {
   const sql = `
 INSERT INTO
   node_table
-  (topic_id, type, content, student_id, created_time)
+  (topic_id, type, student_id, created_time)
 VALUES
-  (${topic_id}, '${type}', '${content}', '${student_id}', now());`
+  (${topic_id}, '${type}', '${student_id}', now());`
 
   const insert_node = await connection.execute(sql)
 
@@ -49,4 +71,4 @@ VALUES
   await connection.execute(sql)
 }
 
-module.exports = { addNode, addEdge }
+module.exports = { addNode, addEdge,createNode }
