@@ -110,25 +110,92 @@ async function queryFlowData(req, res, next) {
  * @param {number} req.query.node_id
  * @param {*} res
  * @param {*} next
- * @deprecated
+ * @description 查询最新的论证内容
  */
 async function queryContentData(req, res, next) {
-  const nide_id = req.query.node_id
+  const id = req.query.node_id
 
   try {
     const connection = await getConnection()
 
-    const sql = `
-SELECT
-  t1.content
-FROM
-  node_table t1
-WHERE
-  t1.id = ${nide_id};`
+    const versionSql = `SELECT MAX(version) FROM argunode WHERE arguKey = ${id}`
 
-    let [results] = await connection.execute(sql)
+    const [results] = await connection.execute(versionSql)
 
-    res.responseSuccess({ content: results[0]?.content }, '请求成功')
+    const version = results[0]['MAX(version)']
+
+    const nodes_sql = `
+    SELECT 
+        id AS node_id,
+        type AS node_type,
+        content AS node_content,
+        arguKey AS node_arguKey,
+        version AS node_version,
+        arguId AS node_arguId
+    FROM 
+        argunode
+    WHERE 
+        arguKey = ${id} and version = ${version};`
+
+    const edges_sql = `
+    SELECT 
+        id AS edge_id,
+        type AS edge_type,
+        source AS edge_source,
+        target AS edge_target,
+        version AS edge_version,
+        arguId AS edge_arguId,
+        arguKey AS edge_arguKey
+    FROM 
+        arguedge
+    WHERE 
+        arguKey = ${id} and version = ${version};`
+
+    const [nodes, edges] = await Promise.all([
+      connection.execute(nodes_sql),
+      connection.execute(edges_sql),
+    ])
+
+    const resNodes = nodes[0].map(item => {
+      return {
+        id: item.node_arguId,
+        data: {
+          inputValue: item.node_content,
+          _type: item.node_type,
+        },
+        type: 'element',
+        position: { x: 0, y: 0 },
+      }
+    })
+
+    const resEdges = edges[0].map(item => {
+      return {
+        id: item.edge_arguId,
+        source: item.edge_source,
+        target: item.edge_target,
+        _type: item.edge_type,
+      }
+    })
+
+    const data = {
+      nodes: resNodes,
+      edges: resEdges,
+    }
+
+    res.responseSuccess(data, '请求成功')
+    //     const connection = await getConnection()
+
+    //     const sql = `
+    // SELECT
+    //   t1.content
+    // FROM
+    //   node_table t1
+    // WHERE
+    //   t1.id = ${nide_id};`
+
+    //     let [results] = await connection.execute(sql)
+
+    //     res.responseSuccess({ content: results[0]?.content }, '请求成功')
   } catch (err) {
     // console.log(err)
     res.responseFail(null, '请求失败')
@@ -260,7 +327,7 @@ async function proposeIdea(req, res, next) {
     res.responseSuccess(null, '新增成功')
   } catch (err) {
     console.log(err)
-    res.responseFail(null, '请求失败'+String(err))
+    res.responseFail(null, '请求失败' + String(err))
   }
 }
 
