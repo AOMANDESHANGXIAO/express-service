@@ -224,10 +224,10 @@ async function proposeIdea(req, res, next) {
     const insert_edge_sql = generateArguedgeInsertSql(edges, arguKey, 1)
 
     await connection.execute(insert_node_sql)
-    console.log('1')
+    // console.log('1')
 
     await connection.execute(insert_edge_sql)
-    console.log('2')
+    // console.log('2')
 
     // 3. 将idea和group连接起来
     const query_group_node_id_sql = `
@@ -253,7 +253,7 @@ async function proposeIdea(req, res, next) {
       topic_id
     )
 
-    console.log('3')
+    // console.log('3')
 
     await connection.commit()
 
